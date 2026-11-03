@@ -145,6 +145,7 @@ This requires a repository secret named `C2MODREGISTRY_PAT`, a personal access t
 | [`init`](https://github.com/Knutschbert/UnchainedLoadingScreens/actions/workflows/init.yml) | First push to `main` | Fills in name, description and links, sets the repository website | `PAGES_PAT` (optional) |
 | [`ci`](https://github.com/Knutschbert/UnchainedLoadingScreens/actions/workflows/ci.yml) | Every push to `main` | Builds and deploys the docs site to `gh-pages` | `PAGES_PAT` (optional, enables Pages) |
 | [`release_reg`](https://github.com/Knutschbert/UnchainedLoadingScreens/actions/workflows/release_reg.yml) | A release is published | Opens a registration issue in the C2ModRegistry | `C2MODREGISTRY_PAT` |
+| [`build-loading-screens`](https://github.com/Knutschbert/UnchainedLoadingScreens/actions/workflows/build-loading-screens.yml) | Every two hours or manually | Polls the registry and publishes `UnchainedLoadingScreens.pak` when needed | `contents: write` |
 
 <details>
 <summary>How it fits together</summary>
@@ -161,6 +162,17 @@ flowchart LR
 ```
 
 </details>
+
+## Loading-screen builder
+
+The asset builder runs locally without GitHub credentials. It scans every
+cooked `.uasset` in a source pak for a `DA_MapInfo_C` export, validates map
+variants against `.umap` files in that pak, updates the config asset, and
+produces `UnchainedLoadingScreens.pak`.
+
+See [`tools/README.md`](tools/README.md) for build, inspect, merge, and local
+polling commands. The large local fixture pak is intentionally ignored by Git
+under `test-assets/**/*.pak`.
 
 ## Credits
 

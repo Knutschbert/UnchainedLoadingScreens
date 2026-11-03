@@ -1,0 +1,79 @@
+name: Build loading screens
+
+on:
+  schedule:
+    - cron: "17 */2 * * *"
+  workflow_dispatch:
+    inputs:
+      manifest_filter:
+        description: "Use registry marker metadata as an optimization"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: loading-screens-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: Chiv2-Community/C2ModRegistry
+          path: .pipeline-registry
+          fetch-depth: 1
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      # This is an Actions cache, not Git history. Source paks are keyed by
+      # their registry SHA-512 and are only retained when the runner cache does.
+      - uses: actions/cache@v4
+        with:
+          path: .pipeline-cache
+          key: registry-paks-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            registry-paks-${{ runner.os }}-
+
+      - name: Build patcher
+        run: dotnet build tools/LoadingScreensPatcher/LoadingScreensPatcher.csproj -c Release -warnaserror
+
+      - name: Poll registry and build pak
+        env:
+          MANIFEST_FILTER: ${{ inputs.manifest_filter || 'false' }}
+        run: |
+          FILTER_ARGS=()
+          if [[ "$MANIFEST_FILTER" == "true" ]]; then
+            FILTER_ARGS+=(--manifest-filter)
+          fi
+
+          python3 scripts/poll-registry.py \
+            --registry-dir .pipeline-registry \
+            --cache-dir .pipeline-cache/paks \
+            --manifest-out .pipeline-work/registry-manifest.json \
+            --config-asset test-assets/dummy/LoadingScreensConfig.uasset \
+            --tool tools/LoadingScreensPatcher/bin/Release/net8.0/LoadingScreensPatcher.dll \
+            --state .pipeline-cache/poll-state.json \
+            --work-dir .pipeline-work \
+            --output-dir .pipeline-output \
+            "${FILTER_ARGS[@]}"
+
+      - name: Publish generated release
+        if: ${{ hashFiles('.pipeline-output/UnchainedLoadingScreens.pak') != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v0.0.${{ github.run_number }}"
+          REGISTRY_SHA=$(git -C .pipeline-registry rev-parse HEAD)
+          gh release create "$TAG" \
+            .pipeline-output/UnchainedLoadingScreens.pak \
+            --title "UnchainedLoadingScreens $TAG" \
+            --notes "Generated from C2ModRegistry commit $REGISTRY_SHA."

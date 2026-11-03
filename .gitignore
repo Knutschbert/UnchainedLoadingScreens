@@ -3,6 +3,17 @@
 /**/debug.log
 .venv/
 site/
+build/
+**/bin/
+**/obj/
+
+# Local loading-screen pipeline downloads, caches, and staging.
+/.pipeline-cache/
+/.pipeline-downloads/
+/.pipeline-work/
+
+# Cooked test paks are large; keep extracted fixtures/reference assets trackable.
+/test-assets/**/*.pak
 
 # Beads / Dolt files (added by bd init)
 .dolt/
