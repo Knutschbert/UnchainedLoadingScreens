@@ -1,6 +1,6 @@
-# __NAME__
+# UnchainedLoadingScreens
 
-__DESCRIPTION__
+Automated loading screen asset assembly for Chivalry 2 Mods
 
 A **Chivalry 2** mod built with [ArgonSDK](https://knutschbert.github.io/ArgonSDK-FieldGuide/).
 
@@ -19,7 +19,7 @@ Describe what your mod does and what makes it fun. Add screenshots or a short vi
 ## Installation
 
 1. Install the [Chivalry 2 Unchained](https://github.com/Chiv2-Community) launcher.
-2. Find **__NAME__** in the mod list and enable it.
+2. Find **UnchainedLoadingScreens** in the mod list and enable it.
 
 ## Usage
 
@@ -27,7 +27,7 @@ Explain any server settings, console commands or game modes the mod adds.
 
 ## Links
 
-- [Source code](__REPO_URL__)
+- [Source code](https://github.com/Knutschbert/UnchainedLoadingScreens)
 - [ArgonSDK Field Guide](https://knutschbert.github.io/ArgonSDK-FieldGuide/)
 - [C2ModRegistry](https://github.com/Chiv2-Community/C2ModRegistry)
 

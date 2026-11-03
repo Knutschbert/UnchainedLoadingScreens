@@ -1,9 +1,9 @@
 {
   "$schema": "https://raw.githubusercontent.com/Chiv2-Community/zero-infra-mod-registry/v1/schemas/mod.schema.json",
-  "name": "__NAME__",
-  "description": "__DESCRIPTION__",
+  "name": "UnchainedLoadingScreens",
+  "description": "Automated loading screen asset assembly for Chivalry 2 Mods",
   "authors": [
-    "__OWNER__"
+    "Knutschbert"
   ],
   "icon_url": null,
   "image_urls": [],

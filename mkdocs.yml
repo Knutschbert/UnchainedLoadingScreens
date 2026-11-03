@@ -1,7 +1,7 @@
-site_name: __NAME__
-site_description: __DESCRIPTION__
-site_url: __SITE_URL__
-repo_url: __REPO_URL__
+site_name: UnchainedLoadingScreens
+site_description: Automated loading screen asset assembly for Chivalry 2 Mods
+site_url: https://Knutschbert.github.io/UnchainedLoadingScreens/
+repo_url: https://github.com/Knutschbert/UnchainedLoadingScreens
 edit_uri: edit/main/docs/
 
 
