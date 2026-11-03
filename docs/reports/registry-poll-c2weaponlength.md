@@ -23,13 +23,17 @@ or `repo_url` field in every generated checkout/schema variant.
 
 ## Root cause
 
-The adapter only searched `release.info.repo_url` and `release.repo_url` when
-building a download URL. It did not fall back to the package-level
-`latest_release_info.repo_url`.
+The adapter had two related defects. It initially only searched
+`release.info.repo_url` and `release.repo_url`, omitting the package-level
+`latest_release_info.repo_url`. After that fallback was added, an earlier guard
+still rejected every package loaded from a local registry checkout because
+`package_url` is intentionally `None` in `--registry-dir` mode. The guard ran
+before repository URL fallback.
 
 ## Fix status
 
-Fixed in `scripts/poll-registry.py`. The URL source order is now:
+Fixed in `scripts/poll-registry.py`. Local checkout mode now proceeds to URL
+resolution, and the URL source order is:
 
 1. `release.info.repo_url`;
 2. `release.repo_url`;

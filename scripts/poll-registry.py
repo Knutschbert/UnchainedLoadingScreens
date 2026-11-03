@@ -76,7 +76,7 @@ def remote_package_files(repository: str, ref: str, token: str | None) -> list[t
     ]
 
 
-def cache_release(package_id: str, release: dict, package_file: Path | None, package_url: str | None, package_repo_url: str | None, cache: Path, token: str | None) -> Path:
+def cache_release(package_id: str, release: dict, package_file: Path | None, package_repo_url: str | None, cache: Path, token: str | None) -> Path:
     expected = release.get("hash", "").lower()
     if len(expected) != 128:
         expected = ""
@@ -89,8 +89,6 @@ def cache_release(package_id: str, release: dict, package_file: Path | None, pac
         source = (package_file.parent / local_pak).resolve()
         shutil.copy2(source, target)
     else:
-        if package_url is None:
-            raise RuntimeError(f"No download source for {package_id} {release['tag']}")
         release_info = release.get("info") if isinstance(release.get("info"), dict) else {}
         repo_url = release_info.get("repo_url") or release.get("repo_url") or package_repo_url
         if not repo_url:
@@ -138,7 +136,7 @@ def main() -> int:
         if release is None or (args.manifest_filter and not is_map_info_release(release)):
             continue
         package_repo_url = package_json.get("latest_release_info", {}).get("repo_url")
-        pak = cache_release(package_id, release, package_file, None if package_file else package_source, package_repo_url, args.cache_dir, args.token)
+        pak = cache_release(package_id, release, package_file, package_repo_url, args.cache_dir, args.token)
         manifest_releases.append({"id": f"{package_id}@{release['tag']}", "pak": str(pak)})
 
     manifest = {"releases": manifest_releases}

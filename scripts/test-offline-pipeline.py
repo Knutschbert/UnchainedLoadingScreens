@@ -4,11 +4,15 @@
 from __future__ import annotations
 
 import hashlib
+import functools
 import importlib.util
 import json
 import shutil
 import subprocess
 import sys
+import tempfile
+import threading
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 
@@ -34,6 +38,10 @@ def run(*args: str, capture: bool = False) -> subprocess.CompletedProcess[str]:
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def sha512(path: Path) -> str:
+    return hashlib.sha512(path.read_bytes()).hexdigest()
 
 
 def inspect(pak: Path) -> dict:
@@ -122,6 +130,38 @@ def poll_registry(state: Path, work: Path, output: Path) -> str:
     return result.stdout
 
 
+def test_checkout_download_fallback(registry_module) -> None:
+    root = Path(tempfile.mkdtemp(prefix="registry-url-test-"))
+    server = None
+    try:
+        release_dir = root / "releases/download/v1.0.0"
+        release_dir.mkdir(parents=True)
+        source = release_dir / "Fixture.pak"
+        shutil.copy2(PAK, source)
+        handler = functools.partial(SimpleHTTPRequestHandler, directory=str(root))
+        server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        cache_dir = BUILD / "url-cache"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        result = registry_module.cache_release(
+            "Fixture/Dummy",
+            {
+                "tag": "v1.0.0",
+                "pak_file_name": "Fixture.pak",
+                "hash": sha512(source),
+            },
+            ROOT / "test-assets/registry/package_db/packages/Fixture/Dummy.json",
+            f"http://127.0.0.1:{server.server_port}",
+            cache_dir,
+            None,
+        )
+        assert result.exists()
+    finally:
+        if server is not None:
+            server.shutdown()
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def main() -> int:
     if not PAK.exists():
         raise FileNotFoundError(f"fixture pak not found: {PAK}")
@@ -197,6 +237,7 @@ def main() -> int:
         "https://github.com/Fixture/Dummy",
         {"tag": "v1.0.0", "pak_file_name": "Dummy.pak"},
     ) == "https://github.com/Fixture/Dummy/releases/download/v1.0.0/Dummy.pak"
+    test_checkout_download_fallback(registry_module)
     first_registry = poll_registry(registry_state, BUILD / "registry-work", registry_output)
     registry_manifest = json.loads((BUILD / "registry-manifest.json").read_text())
     assert registry_manifest["releases"][0]["id"] == "Fixture/Dummy@v1.0.0"
