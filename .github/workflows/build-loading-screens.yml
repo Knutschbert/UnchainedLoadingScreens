@@ -64,7 +64,20 @@ jobs:
             --state .pipeline-cache/poll-state.json \
             --work-dir .pipeline-work \
             --output-dir .pipeline-output \
+            --report-dir .pipeline-work/reports \
             "${FILTER_ARGS[@]}"
+
+      - name: Upload processing report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: loading-screens-report-${{ github.run_number }}
+          if-no-files-found: warn
+          path: |
+            .pipeline-work/registry-manifest.json
+            .pipeline-work/reports/
+            .pipeline-cache/poll-state.json
+            .pipeline-output/
 
       - name: Publish generated release
         if: ${{ hashFiles('.pipeline-output/UnchainedLoadingScreens.pak') != '' }}

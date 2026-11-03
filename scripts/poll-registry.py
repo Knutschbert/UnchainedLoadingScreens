@@ -51,6 +51,10 @@ def is_map_info_release(release: dict) -> bool:
     return False
 
 
+def release_download_url(repo_url: str, release: dict) -> str:
+    return f"{repo_url.rstrip('/')}/releases/download/{urllib.parse.quote(release['tag'])}/{urllib.parse.quote(release['pak_file_name'])}"
+
+
 def local_package_files(registry: Path) -> list[tuple[str, Path]]:
     index = registry / "package_db/mod_list_index.txt"
     result = []
@@ -72,7 +76,7 @@ def remote_package_files(repository: str, ref: str, token: str | None) -> list[t
     ]
 
 
-def cache_release(package_id: str, release: dict, package_file: Path | None, package_url: str | None, cache: Path, token: str | None) -> Path:
+def cache_release(package_id: str, release: dict, package_file: Path | None, package_url: str | None, package_repo_url: str | None, cache: Path, token: str | None) -> Path:
     expected = release.get("hash", "").lower()
     if len(expected) != 128:
         expected = ""
@@ -87,10 +91,11 @@ def cache_release(package_id: str, release: dict, package_file: Path | None, pac
     else:
         if package_url is None:
             raise RuntimeError(f"No download source for {package_id} {release['tag']}")
-        repo_url = release.get("info", {}).get("repo_url") or release.get("repo_url")
+        release_info = release.get("info") if isinstance(release.get("info"), dict) else {}
+        repo_url = release_info.get("repo_url") or release.get("repo_url") or package_repo_url
         if not repo_url:
             raise RuntimeError(f"Release has no repo_url: {package_id} {release['tag']}")
-        download = f"{repo_url.rstrip('/')}/releases/download/{urllib.parse.quote(release['tag'])}/{urllib.parse.quote(release['pak_file_name'])}"
+        download = release_download_url(repo_url, release)
         request = urllib.request.Request(download)
         if token:
             request.add_header("Authorization", f"Bearer {token}")
@@ -118,6 +123,7 @@ def main() -> int:
     parser.add_argument("--state", required=True, type=Path)
     parser.add_argument("--work-dir", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
+    parser.add_argument("--report-dir", type=Path)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -131,7 +137,8 @@ def main() -> int:
         release = latest_release(package_json)
         if release is None or (args.manifest_filter and not is_map_info_release(release)):
             continue
-        pak = cache_release(package_id, release, package_file, None if package_file else package_source, args.cache_dir, args.token)
+        package_repo_url = package_json.get("latest_release_info", {}).get("repo_url")
+        pak = cache_release(package_id, release, package_file, None if package_file else package_source, package_repo_url, args.cache_dir, args.token)
         manifest_releases.append({"id": f"{package_id}@{release['tag']}", "pak": str(pak)})
 
     manifest = {"releases": manifest_releases}
@@ -149,6 +156,8 @@ def main() -> int:
         "--work-dir", str(args.work_dir),
         "--output-dir", str(args.output_dir),
     ]
+    if args.report_dir is not None:
+        command.extend(["--report-dir", str(args.report_dir)])
     if args.dry_run:
         command.append("--dry-run")
     subprocess.run(command, check=True)

@@ -42,6 +42,7 @@ def main() -> int:
     parser.add_argument("--state", required=True, type=Path)
     parser.add_argument("--work-dir", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
+    parser.add_argument("--report-dir", type=Path)
     parser.add_argument("--dotnet", default="dotnet")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -67,6 +68,14 @@ def main() -> int:
 
         inspection = run_tool(args.dotnet, args.tool, "inspect", "--pak", str(pak))
         report = json.loads(inspection.stdout)
+        if args.report_dir is not None:
+            args.report_dir.mkdir(parents=True, exist_ok=True)
+            report_name = hashlib.sha256(release_id.encode("utf-8")).hexdigest()[:16] + ".json"
+            (args.report_dir / report_name).write_text(json.dumps({
+                "release_id": release_id,
+                "pak": str(pak),
+                "inspection": report,
+            }, indent=2) + "\n")
         markers = report["markers"]
         accepted = sum(marker.get("validation", {}).get("acceptedCount", 0) for marker in markers)
         print(f"check {release_id}: {len(markers)} marker(s), {accepted} accepted map(s)")

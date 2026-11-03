@@ -9,9 +9,6 @@
       "hash": "49302b82951e76f69025b263b0f3db90bcd69efefb50ba004633eb24f68c922fb7f8114f15b8a18f7a0183a056025d5c38bc63a75a883a249af1eea9153f6b65",
       "pak_file_name": "Dummy.pak",
       "release_date": "2026-11-03T00:00:00",
-      "info": {
-        "repo_url": "https://example.invalid/Fixture/Dummy"
-      },
       "manifest": {
         "markers": [
           {

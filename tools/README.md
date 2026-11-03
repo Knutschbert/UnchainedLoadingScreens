@@ -64,6 +64,12 @@ same.
 Packages with no `DA_MapInfo_C` marker are recorded as processed and skipped;
 they do not fail the polling run.
 
+Pass `--report-dir build/registry-reports` to save one JSON inspection report
+per processed release. Reports include pak file lists, marker exports,
+accepted/ignored variants, descriptions, image source/status, and skip reasons.
+The GitHub workflow uploads these reports as the
+`loading-screens-report-<run-number>` artifact.
+
 ## Offline golden-fixture test
 
 Run the complete local round-trip test:

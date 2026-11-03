@@ -6,6 +6,8 @@ site/
 build/
 **/bin/
 **/obj/
+**/__pycache__/
+*.pyc
 
 # Local loading-screen pipeline downloads, caches, and staging.
 /.pipeline-cache/

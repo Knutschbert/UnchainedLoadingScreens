@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import shutil
 import subprocess
@@ -17,6 +18,14 @@ CONFIG = ROOT / "test-assets/dummy/LoadingScreensConfig.uasset"
 TOOL_PROJECT = ROOT / "tools/LoadingScreensPatcher/LoadingScreensPatcher.csproj"
 TOOL_DLL = ROOT / "tools/LoadingScreensPatcher/bin/Release/net8.0/LoadingScreensPatcher.dll"
 BUILD = ROOT / "build/offline-test"
+
+
+def load_registry_module():
+    spec = importlib.util.spec_from_file_location("poll_registry", ROOT / "scripts/poll-registry.py")
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def run(*args: str, capture: bool = False) -> subprocess.CompletedProcess[str]:
@@ -79,6 +88,8 @@ def poll(manifest: Path, state: Path, work: Path, output: Path) -> str:
         str(work),
         "--output-dir",
         str(output),
+        "--report-dir",
+        str(BUILD / "poll-reports"),
         capture=True,
     )
     return result.stdout
@@ -104,6 +115,8 @@ def poll_registry(state: Path, work: Path, output: Path) -> str:
         str(work),
         "--output-dir",
         str(output),
+        "--report-dir",
+        str(BUILD / "registry-reports"),
         capture=True,
     )
     return result.stdout
@@ -179,11 +192,19 @@ def main() -> int:
 
     registry_state = BUILD / "registry-state.json"
     registry_output = BUILD / "registry-output"
+    registry_module = load_registry_module()
+    assert registry_module.release_download_url(
+        "https://github.com/Fixture/Dummy",
+        {"tag": "v1.0.0", "pak_file_name": "Dummy.pak"},
+    ) == "https://github.com/Fixture/Dummy/releases/download/v1.0.0/Dummy.pak"
     first_registry = poll_registry(registry_state, BUILD / "registry-work", registry_output)
     registry_manifest = json.loads((BUILD / "registry-manifest.json").read_text())
     assert registry_manifest["releases"][0]["id"] == "Fixture/Dummy@v1.0.0"
     assert "check Fixture/Dummy@v1.0.0: 1 marker(s), 1 accepted map(s)" in first_registry
     assert (registry_output / "UnchainedLoadingScreens.pak").exists()
+    reports = list((BUILD / "registry-reports").glob("*.json"))
+    assert len(reports) == 1
+    assert json.loads(reports[0].read_text())["release_id"] == "Fixture/Dummy@v1.0.0"
 
     second_registry = poll_registry(registry_state, BUILD / "registry-work", registry_output)
     assert "skip Fixture/Dummy@v1.0.0: already processed" in second_registry
