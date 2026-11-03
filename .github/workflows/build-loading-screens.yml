@@ -67,6 +67,15 @@ jobs:
             --report-dir .pipeline-work/reports \
             "${FILTER_ARGS[@]}"
 
+      - name: Render release notes
+        if: success()
+        run: |
+          python3 scripts/render-release-notes.py \
+            --manifest .pipeline-work/registry-manifest.json \
+            --reports .pipeline-work/reports \
+            --registry-sha "$(git -C .pipeline-registry rev-parse HEAD)" \
+            --out .pipeline-work/release-notes.md
+
       - name: Upload processing report
         if: always()
         uses: actions/upload-artifact@v4
@@ -78,6 +87,7 @@ jobs:
             .pipeline-work/reports/
             .pipeline-cache/poll-state.json
             .pipeline-output/
+            .pipeline-work/release-notes.md
 
       - name: Publish generated release
         if: ${{ hashFiles('.pipeline-output/UnchainedLoadingScreens.pak') != '' }}
@@ -89,4 +99,4 @@ jobs:
           gh release create "$TAG" \
             .pipeline-output/UnchainedLoadingScreens.pak \
             --title "UnchainedLoadingScreens $TAG" \
-            --notes "Generated from C2ModRegistry commit $REGISTRY_SHA."
+            --notes-file .pipeline-work/release-notes.md

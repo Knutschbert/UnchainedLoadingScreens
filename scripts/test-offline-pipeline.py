@@ -246,6 +246,24 @@ def main() -> int:
     reports = list((BUILD / "registry-reports").glob("*.json"))
     assert len(reports) == 1
     assert json.loads(reports[0].read_text())["release_id"] == "Fixture/Dummy@v1.0.0"
+    notes = BUILD / "release-notes.md"
+    run(
+        "python3",
+        str(ROOT / "scripts/render-release-notes.py"),
+        "--manifest",
+        str(BUILD / "registry-manifest.json"),
+        "--reports",
+        str(BUILD / "registry-reports"),
+        "--registry-sha",
+        "fixture-sha",
+        "--out",
+        str(notes),
+    )
+    notes_text = notes.read_text()
+    assert "TDM_KendoPlus_Dev" in notes_text
+    assert "TDM_KP_Quarry" in notes_text
+    assert "Fixture source release note." in notes_text
+    assert "Source release notes" in notes_text
 
     second_registry = poll_registry(registry_state, BUILD / "registry-work", registry_output)
     assert "skip Fixture/Dummy@v1.0.0: already processed" in second_registry

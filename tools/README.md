@@ -70,6 +70,10 @@ accepted/ignored variants, descriptions, image source/status, and skip reasons.
 The GitHub workflow uploads these reports as the
 `loading-screens-report-<run-number>` artifact.
 
+Generated GitHub release notes include the source release notes plus a
+human-readable list of included and ignored map variants. The JSON reports
+remain the detailed machine-readable record.
+
 ## Offline golden-fixture test
 
 Run the complete local round-trip test:

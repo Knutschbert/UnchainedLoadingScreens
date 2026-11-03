@@ -137,7 +137,17 @@ def main() -> int:
             continue
         package_repo_url = package_json.get("latest_release_info", {}).get("repo_url")
         pak = cache_release(package_id, release, package_file, package_repo_url, args.cache_dir, args.token)
-        manifest_releases.append({"id": f"{package_id}@{release['tag']}", "pak": str(pak)})
+        release_info = release.get("info") if isinstance(release.get("info"), dict) else {}
+        repo_url = release_info.get("repo_url") or release.get("repo_url") or package_repo_url
+        manifest_releases.append({
+            "id": f"{package_id}@{release['tag']}",
+            "package_id": package_id,
+            "tag": release["tag"],
+            "pak": str(pak),
+            "repo_url": repo_url,
+            "release_url": release_download_url(repo_url, release) if repo_url else None,
+            "release_notes_markdown": release.get("release_notes_markdown"),
+        })
 
     manifest = {"releases": manifest_releases}
     args.manifest_out.parent.mkdir(parents=True, exist_ok=True)
