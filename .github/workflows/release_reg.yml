@@ -1,0 +1,32 @@
+name: Create Registry Issue
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch: # Manual trigger. Run it from the release tag in the "Use workflow from" dropdown.
+
+jobs:
+  create-registry-issue:
+    # skip pre-releases (workflow_dispatch has no release payload, so it always runs)
+    if: ${{ github.event_name != 'release' || !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      HAS_REGISTRY_PAT: ${{ secrets.C2MODREGISTRY_PAT != '' }}
+    concurrency:
+      group: registry-release-${{ github.repository }}-${{ github.ref }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Check for registry token
+        if: env.HAS_REGISTRY_PAT != 'true'
+        run: |
+          echo "::notice::Secret C2MODREGISTRY_PAT is not set, skipping registry submission. See the README section 'Releasing'."
+
+      - name: Submit release to C2ModRegistry
+        if: env.HAS_REGISTRY_PAT == 'true'
+        uses: Chiv2-Community/zero-infra-mod-registry/actions/automated-publish@v1
+        with:
+          kind: mod
+          registry_token: ${{ secrets.C2MODREGISTRY_PAT }}

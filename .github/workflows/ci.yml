@@ -1,0 +1,49 @@
+name: ci
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # a new repo starts with template placeholders until the init workflow has filled them in,
+      # which then triggers this workflow again
+      - name: Skip until initialized
+        id: check
+        run: |
+          if grep -qs '__NAME__' mkdocs.yml; then
+            echo "::notice::mkdocs.yml still has template placeholders, skipping. The init workflow will trigger this workflow again."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-python@v5
+        if: steps.check.outputs.skip != 'true'
+        with:
+          python-version: 3.x
+      - uses: actions/cache@v4
+        if: steps.check.outputs.skip != 'true'
+        with:
+          key: ${{ github.ref }}
+          path: .cache
+      - if: steps.check.outputs.skip != 'true'
+        run: pip install mkdocs-material mkdocs-roamlinks-plugin
+      - if: steps.check.outputs.skip != 'true'
+        run: mkdocs gh-deploy --force
+      - name: Enable GitHub Pages (first run only)
+        if: steps.check.outputs.skip != 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.PAGES_PAT || github.token }}
+        run: |
+          if ! gh api "repos/${{ github.repository }}/pages" >/dev/null 2>&1; then
+            gh api -X POST "repos/${{ github.repository }}/pages" \
+              -f "source[branch]=gh-pages" -f "source[path]=/"
+          fi

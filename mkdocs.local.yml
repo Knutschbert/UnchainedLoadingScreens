@@ -1,0 +1,5 @@
+# local preview only: fills in the values the init workflow would set
+INHERIT: mkdocs.yml
+site_name: Local preview
+site_url: http://127.0.0.1:8000/
+repo_url: https://github.com/example/example

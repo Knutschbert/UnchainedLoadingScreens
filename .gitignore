@@ -1,0 +1,5 @@
+.vscode/settings.json
+.obsidian/*
+/**/debug.log
+.venv/
+site/

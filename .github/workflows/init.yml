@@ -1,0 +1,77 @@
+name: Init from template
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  init:
+    # never run in the template repo itself
+    if: ${{ !github.event.repository.is_template }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for template placeholders
+        id: check
+        run: |
+          if grep -qs '__NAME__' README.md mkdocs.yml docs/index.md mod.json; then
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fill placeholders in mod.json, README.md, mkdocs.yml and docs/index.md
+        if: steps.check.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NAME: ${{ github.event.repository.name }}
+          OWNER: ${{ github.repository_owner }}
+          SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+          REPO_URL: ${{ github.event.repository.html_url }}
+        run: |
+          DESC=$(gh api "repos/${{ github.repository }}" --jq '.description // ""')
+          if [ -z "$DESC" ]; then
+            DESC="A Chivalry 2 mod built with ArgonSDK."
+          fi
+          export DESC
+
+          # mod.json is filled with jq so quotes in the description are escaped properly
+          jq --arg name "$NAME" --arg owner "$OWNER" --arg desc "$DESC" \
+            '.name=$name | .authors=[$owner] | .description=$desc' \
+            mod.json > mod.tmp && mv mod.tmp mod.json
+
+          perl -pi -e 's/__NAME__/$ENV{NAME}/g; s/__DESCRIPTION__/$ENV{DESC}/g; s/__SITE_URL__/$ENV{SITE_URL}/g; s/__REPO_URL__/$ENV{REPO_URL}/g' README.md mkdocs.yml docs/index.md
+
+      - name: Commit
+        if: steps.check.outputs.needed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md mkdocs.yml docs/index.md mod.json
+          git commit -m "Initialize from template"
+          git push
+
+      # pushes made with GITHUB_TOKEN do not trigger other workflows, so deploy explicitly
+      - name: Deploy site
+        if: steps.check.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci.yml --ref "${{ github.ref_name }}"
+
+      # editing repository settings needs admin rights, which the default token does not have,
+      # so this only works if the PAGES_PAT secret is set
+      - name: Set repository website
+        if: steps.check.outputs.needed == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.PAGES_PAT }}
+          SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::notice::PAGES_PAT is not set, skipping. Set the website URL ($SITE_URL) in the repository settings manually."
+            exit 0
+          fi
+          gh api -X PATCH "repos/${{ github.repository }}" -f homepage="$SITE_URL"

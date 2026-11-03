@@ -1,0 +1,121 @@
+/* Maximum space for text block */
+.md-grid {
+  max-width: 90%;
+}
+
+/* Center mermaid diagrams */
+div.mermaid {
+  text-align: center;
+}
+
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Colors taken from chivalry2.com: gold #e2bd45 / #fff580, steel #c4ccd0 / #aeb9be, dark #1c2123 / #111a1e */
+
+/* Header: dark, translucent, gold edge (both themes) */
+[data-md-color-primary="amber"] {
+  --md-primary-fg-color: #111a1e;
+  --md-primary-fg-color--light: #1c2123;
+  --md-primary-fg-color--dark: #000000;
+  --md-primary-bg-color: #e9edef;
+  --md-primary-bg-color--light: #e9edefb3;
+}
+
+.md-header {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.92), rgba(17, 26, 30, 0.82));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 2px solid #e2bd45;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* Dark theme */
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: #1c2123;
+  --md-default-fg-color: #c4ccd0;
+  --md-default-fg-color--light: #aeb9be;
+  --md-typeset-color: #c4ccd0;
+  --md-typeset-a-color: #e2bd45;
+  --md-accent-fg-color: #fff580;
+  --md-code-bg-color: rgba(0, 0, 0, 0.4);
+  --md-footer-bg-color: rgba(0, 0, 0, 0.6);
+}
+
+[data-md-color-scheme="slate"] body {
+  background: linear-gradient(to bottom, #1c2123 0%, #111a1e 100%) fixed;
+}
+
+[data-md-color-scheme="slate"] .md-content__inner {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 1rem 1.5rem;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* gold gradient page title */
+[data-md-color-scheme="slate"] .md-typeset h1 {
+  background: linear-gradient(to bottom, #fff580 0%, #e2bd45 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Light theme */
+[data-md-color-scheme="default"] {
+  --md-default-bg-color: #c4ccd0;
+  --md-default-fg-color: #1c2123;
+  --md-typeset-color: #1c2123;
+  --md-typeset-a-color: #7a5c00;
+  --md-accent-fg-color: #a67c00;
+  --md-code-bg-color: rgba(255, 255, 255, 0.45);
+  --md-footer-bg-color: #111a1e;
+}
+
+[data-md-color-scheme="default"] body {
+  background: linear-gradient(to bottom, #c4ccd0 0%, #aeb9be 100%) fixed;
+}
+
+[data-md-color-scheme="default"] .md-content__inner {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  padding: 1rem 1.5rem;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+[data-md-color-scheme="default"] .md-typeset h1 {
+  color: #1c2123;
+}
+
+[data-md-color-scheme="default"] .md-typeset a {
+  color: #7a5c00;
+}
+
+[data-md-color-scheme="default"] .md-typeset a:hover {
+  color: #a67c00;
+}
+
+/* gold gradient buttons */
+.md-typeset .md-button {
+  background: linear-gradient(to bottom, #fff580 0%, #e2bd45 100%);
+  border: 1px solid #dbaf36;
+  color: #1c2123;
+}
+
+/* Larger logo in the header */
+.md-header__button.md-logo {
+  padding: 0.3rem;
+}
+
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  height: 2.2rem;
+  width: 2.2rem;
+}
